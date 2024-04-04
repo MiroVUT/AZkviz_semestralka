@@ -24,6 +24,9 @@ pozice = numpy.array([[780, 660], [840, 660], [900, 660], [960, 660], [1020, 660
                       [900, 460], [960, 460], [1020, 460],
                       [930, 410], [990, 410],
                       [960, 360]], dtype=object)
+spodni = [0, 1, 2, 3, 4, 5, 6]
+leva = [0, 7, 13, 18, 22, 25, 27]
+prava = [6, 12, 17, 21, 24, 26, 27]
 barvy = numpy.array(['white', 'white', 'white', 'white', 'white', 'white', 'white',
                        'white', 'white', 'white', 'white', 'white', 'white',
                        'white', 'white', 'white', 'white', 'white',
@@ -53,9 +56,6 @@ poradi_hrac = 'hraje červená'
 stav = 1
 odpoved = ""
 
-spodni = [0, 1, 2, 3, 4, 5, 6]
-leva = [0, 7, 13, 18, 22, 25, 27]
-prava = [6, 12, 17, 21, 24, 26, 27]
 def sestiuhelnik(surface, color, center):
     vertices = []
     side_length = 30
@@ -89,14 +89,57 @@ def kontrola_strany(strana, pole, barva):
         if str(pole[strana[i]]) == str(barva):
             obsazene.append(strana[i])
     return obsazene
-def kontrola_trojice(kontrola_barvy):
+def kontrola_trojice(barva):
     podminka_trojice = False
-    spodniOK = kontrola_strany(spodni, barvy, kontrola_barvy)
-    levaOK = kontrola_strany(leva, barvy, kontrola_barvy)
-    pravaOK = kontrola_strany(prava, barvy, kontrola_barvy)
+    nejkratsi = []
+    spodniOK = kontrola_strany(spodni, barvy, barva)
+    levaOK = kontrola_strany(leva, barvy, barva)
+    pravaOK = kontrola_strany(prava, barvy, barva)
     if len(spodniOK) != 0 and len(pravaOK) != 0 and len(levaOK) != 0:
         podminka_trojice = True
-    return podminka_trojice
+        nejkratsi = spodniOK
+        if len(nejkratsi) > len(levaOK):
+            nejkratsi = levaOK
+        if len(nejkratsi) > len(pravaOK):
+            nejkratsi = pravaOK
+    return podminka_trojice, nejkratsi
+def vyherni_kontrola_strany(strana, pozice_spojenych):
+    ok = False
+    for i in range(len(pozice_spojenych)):
+        if pozice_spojenych[i] in strana:
+            ok = True
+            break
+    return ok
+def vyherni_kontrola_trojice(pozice_spojenych):
+    if vyherni_kontrola_strany(spodni, pozice_spojenych) == True and vyherni_kontrola_strany(leva, pozice_spojenych) == True and vyherni_kontrola_strany(prava, pozice_spojenych) == True:
+        return True
+def souradnice_podle_barev(souradnice, barvy, barva):
+    souradnice_obsazene = numpy.array([0,0], dtype=object)
+    pozice_obsazene = []
+    for i in range(len(souradnice)):
+        if str(barvy[i]) == str(barva):
+            pozice_obsazene.append(i)
+            souradnice_obsazene = numpy.vstack((souradnice_obsazene, numpy.array(souradnice[i])))
+    souradnice_obsazene = numpy.delete(souradnice_obsazene, 0, axis=0)
+    return souradnice_obsazene, pozice_obsazene
+def podminka_spojeni(nejmensi, barva):
+    vyhra = False
+    souradnice_obsazenych, pozice_obsazene = souradnice_podle_barev(pozice, barvy, barva)
+    for i in range(len(nejmensi)):
+        napojene = [nejmensi[i]]
+        j=0
+        while j < len(napojene):
+            x_max = pozice[napojene[j], 0]+70
+            x_min = pozice[napojene[j], 0]-70
+            y_max = pozice[napojene[j], 1]+60
+            y_min = pozice[napojene[j], 1]-60
+            for k in range(len(pozice_obsazene)):
+                if pozice_obsazene[k] not in napojene and souradnice_obsazenych[k, 0] < x_max and souradnice_obsazenych[k, 0] > x_min and souradnice_obsazenych[k, 1] < y_max and souradnice_obsazenych[k, 1] > y_min:
+                    napojene.append(pozice_obsazene[k])
+            j = j+1
+        if vyherni_kontrola_trojice(napojene) == True:
+            vyhra = True
+    return  vyhra
 
 while running:
     for event in pygame.event.get():
@@ -114,12 +157,16 @@ while running:
                 odpoved += event.unicode
 
     if stav == 1:
-        vytez = kontrola_trojice('red')
-        if vytez == True:
-            stav=6
-        vytez = kontrola_trojice('green')
-        if vytez == True:
-            stav=6
+        podminka_trojice, nejkratsi = kontrola_trojice('red')
+        if podminka_trojice == True:
+            vyhra = podminka_spojeni(nejkratsi, 'red')
+            if vyhra == True:
+                stav = 6
+        podminka_trojice, nejkratsi = kontrola_trojice('green')
+        if podminka_trojice == True:
+            vyhra = podminka_spojeni(nejkratsi, 'green')
+            if vyhra == True:
+                stav = 6
         vypis_desky(poradi_hrac)
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
