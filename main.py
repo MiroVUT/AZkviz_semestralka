@@ -20,7 +20,7 @@ pismeno = numpy.array(['Š', 'T', 'U', 'V', 'W', 'Z', 'Ž',
                        'Č', 'D', 'E',
                        'B', 'C',
                        'A'], dtype=numpy.str_)
-#hodnoty pozic by meli byt v budoucnu navazany na promene 'width' a 'height', nechtelo se mi se s tim srat
+#hodnoty pozic by meli byt v budoucnu navazany na promene 'width' a 'height', nechtelo se mi se s tim delat v testu
 #kvuli teto matici jsem pouzival numpy = jednoduchsi a prehlednejsi prace s indexi
 pozice = numpy.array([[780, 660], [840, 660], [900, 660], [960, 660], [1020, 660], [1080, 660], [1140, 660],
                       [810, 610], [870, 610], [930, 610], [990, 610], [1050, 610], [1110, 610],
